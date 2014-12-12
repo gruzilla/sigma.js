@@ -326,7 +326,14 @@
             y0 = start.y;
 
             // Homothetic transformation:
-            newStageRatio = _startCameraRatio / dRatio;
+            // newStageRatio = _startCameraRatio / dRatio;
+            newStageRatio = Math.max(
+                _settings('zoomMin'),
+                Math.min(
+                    _settings('zoomMax'),
+                    _startCameraRatio / dRatio
+                )
+            );
             x0 = x0 * dRatio;
             y0 = y0 * dRatio;
 
