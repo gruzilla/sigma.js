@@ -177,7 +177,6 @@
     // Display nodes
     //---------------
     renderers = sigma.svg.nodes;
-    subrenderers = sigma.svg.labels;
 
     //-- First we create the nodes which are not already created
     if (drawNodes)
@@ -192,15 +191,6 @@
 
           this.domElements.nodes[a[i].id] = e;
           this.domElements.groups.nodes.appendChild(e);
-
-          // Label
-          e = (subrenderers[a[i].type] || subrenderers.def).create(
-            a[i],
-            embedSettings
-          );
-
-          this.domElements.labels[a[i].id] = e;
-          this.domElements.groups.labels.appendChild(e);
         }
       }
 
@@ -214,12 +204,37 @@
           this.domElements.nodes[a[i].id],
           embedSettings
         );
+      }
+
+    // Display labels
+    //---------------
+    renderers = sigma.svg.labels;
+
+    //-- First we create the labels which are not already created
+    if (drawLabels)
+      for (a = this.nodesOnScreen, i = 0, l = a.length; i < l; i++) {
+        if (!a[i].hidden && !this.domElements.labels[a[i].id]) {
+
+          // Label
+          e = (renderers[a[i].type] || renderers.def).create(
+              a[i],
+              embedSettings
+          );
+
+          this.domElements.labels[a[i].id] = e;
+          this.domElements.groups.labels.appendChild(e);
+        }
+      }
+
+    //-- Second we update the nodes
+    if (drawLabels)
+      for (a = this.nodesOnScreen, i = 0, l = a.length; i < l; i++) {
 
         // Label
-        (subrenderers[a[i].type] || subrenderers.def).update(
-          a[i],
-          this.domElements.labels[a[i].id],
-          embedSettings
+        (renderers[a[i].type] || renderers.def).update(
+            a[i],
+            this.domElements.labels[a[i].id],
+            embedSettings
         );
       }
 
