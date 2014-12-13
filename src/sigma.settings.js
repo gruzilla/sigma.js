@@ -162,6 +162,11 @@
     // {boolean} Defines whether the custom events such as "clickNode" can be
     //           used.
     eventsEnabled: true,
+    // {boolean} Defines whether the dom should be searched for the next
+    //           matching element starting from the event-target
+    traverseDom: true,
+    // {number} Defines how many dom nodes should be traversed at maximum
+    traverseDomInterrupt: 5,
     // {number} Defines by how much multiplicating the zooming level when the
     //          user zooms with the mouse-wheel.
     zoomingRatio: 1.7,

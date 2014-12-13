@@ -31,18 +31,66 @@
       this.class = this.attr('class');
       this.id = this.attr('id');
 
+
       // Methods
       this.isNode = function() {
-        return !!~this.class.indexOf(self.settings('classPrefix') + '-node');
+        return this.class && !!~this.class.indexOf(self.settings('classPrefix') + '-node');
       };
 
       this.isEdge = function() {
-        return !!~this.class.indexOf(self.settings('classPrefix') + '-edge');
+        return this.class && !!~this.class.indexOf(self.settings('classPrefix') + '-edge');
       };
 
       this.isHover = function() {
-        return !!~this.class.indexOf(self.settings('classPrefix') + '-hover');
+        return this.class && !!~this.class.indexOf(self.settings('classPrefix') + '-hover');
       };
+    }
+
+    function findMatchingElement(domElement, testFunctions, iterationCounter) {
+
+      if (typeof testFunctions === 'string') {
+        testFunctions = [testFunctions];
+      }
+
+      if (!self.settings('traverseDom')) {
+        var element = new Element(domElement);
+        for (var i1 = 0; i1 < testFunctions.length; i1++) {
+          if (element[testFunctions[i1]]()) {
+            return element;
+          }
+        }
+        return null;
+      }
+
+      if (!('parentNode' in domElement)) {
+        return null;
+      }
+      if (typeof iterationCounter === 'undefined') {
+        iterationCounter = 0;
+      }
+      if (iterationCounter > self.settings('traverseDomInterrupt')) {
+        return null;
+      }
+
+      var cssClass = domElement.getAttributeNS(null, 'class');
+      if (cssClass === null) {
+        return findMatchingElement(domElement.parentNode, testFunctions, iterationCounter+1);
+      }
+      if (!!~cssClass.indexOf(self.settings('classPrefix') + '-svg')) {
+        return null;
+      }
+
+      var e = new Element(domElement);
+
+      for (var i2 = 0; i2 < testFunctions.length; i2++) {
+        if (e[testFunctions[i2]]()) {
+          return e;
+        } else {
+          return findMatchingElement(domElement.parentNode, testFunctions, iterationCounter+1);
+        }
+      }
+
+      return null;
     }
 
     // Click
@@ -54,9 +102,9 @@
       self.dispatchEvent('click', e);
 
       // Are we on a node?
-      var element = new Element(e.target);
+      var element = findMatchingElement(e.target, 'isNode');
 
-      if (element.isNode())
+      if (element !== null)
         self.dispatchEvent('clickNode', {
           node: graph.nodes(element.attr('data-node-id'))
         });
@@ -76,9 +124,9 @@
       self.dispatchEvent('doubleClick', e);
 
       // Are we on a node?
-      var element = new Element(e.target);
+      var element = findMatchingElement(e.target, 'isNode');
 
-      if (element.isNode())
+      if (element !== null)
         self.dispatchEvent('doubleClickNode', {
           node: graph.nodes(element.attr('data-node-id'))
         });
@@ -96,7 +144,7 @@
       if (!self.settings('eventsEnabled') || !target)
         return;
 
-      var el = new Element(target);
+      var el = findMatchingElement(target, ['isNode', 'isEdge']);
 
       if (el.isNode()) {
         self.dispatchEvent('overNode', {
@@ -120,7 +168,7 @@
       if (!self.settings('eventsEnabled'))
         return;
 
-      var el = new Element(target);
+      var el = findMatchingElement(target, ['isNode', 'isEdge']);
 
       if (el.isNode()) {
         self.dispatchEvent('outNode', {
