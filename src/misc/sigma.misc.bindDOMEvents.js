@@ -146,6 +146,10 @@
 
       var el = findMatchingElement(target, ['isNode', 'isEdge']);
 
+      if (el === null) {
+        return;
+      }
+
       if (el.isNode()) {
         self.dispatchEvent('overNode', {
           node: graph.nodes(el.attr('data-node-id'))
@@ -169,6 +173,10 @@
         return;
 
       var el = findMatchingElement(target, ['isNode', 'isEdge']);
+
+      if (el === null) {
+        return;
+      }
 
       if (el.isNode()) {
         self.dispatchEvent('outNode', {
