@@ -200,7 +200,6 @@
     sigma.utils.doubleClick(container, 'click', doubleClick);
 
     // Touch counterparts
-    container.addEventListener('touchstart', click, false);
     sigma.utils.doubleClick(container, 'touchstart', doubleClick);
 
     // Mouseover
