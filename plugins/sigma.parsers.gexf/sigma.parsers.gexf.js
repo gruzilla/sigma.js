@@ -46,6 +46,9 @@
           if (obj.viz.position && typeof obj.viz.position === 'object') {
             obj.x = obj.viz.position.x;
             obj.y = -obj.viz.position.y; // Needed otherwise it's up side down
+          } else {
+            obj.x = 0;
+            obj.y = 0;
           }
           obj.size = obj.viz.size;
           obj.color = obj.viz.color;
