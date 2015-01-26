@@ -325,6 +325,10 @@
             x0 = start.x;
             y0 = start.y;
 
+            // Finalize:
+            newStageX = x0 - end.x + _startCameraX;
+            newStageY = y0 - end.y + _startCameraY;
+
             // Homothetic transformation:
             // newStageRatio = _startCameraRatio / dRatio;
             newStageRatio = Math.max(
@@ -345,10 +349,6 @@
             y1 = y0 * cos - x0 * sin;
             x0 = x1;
             y0 = y1;
-
-            // Finalize:
-            newStageX = x0 - end.x + _startCameraX;
-            newStageY = y0 - end.y + _startCameraY;
 
             if (
               newStageRatio !== _camera.ratio ||
