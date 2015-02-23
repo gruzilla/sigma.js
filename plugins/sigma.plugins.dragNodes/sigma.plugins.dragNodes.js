@@ -52,6 +52,7 @@
       _body = document.body,
       _renderer = renderer,
       _mouse = renderer.container.lastChild,
+      _hovering = renderer.settings('enableHovering'),
       _camera = renderer.camera,
       _node = null,
       _prefix = '',
@@ -197,7 +198,7 @@
       }
 
       // Activate drag graph.
-      _renderer.settings({mouseEnabled: true, enableHovering: true});
+      _renderer.settings({mouseEnabled: true, enableHovering: _hovering});
       _s.refresh();
 
       if (_drag) {
