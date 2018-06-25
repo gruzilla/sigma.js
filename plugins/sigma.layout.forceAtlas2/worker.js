@@ -172,7 +172,6 @@
      * Algorithm initialization
      */
 
-    // TODO: autosettings
     function init(nodes, edges, config) {
       config = config || {};
       var i, l;
@@ -238,7 +237,6 @@
 
       if (W.settings.barnesHutOptimize) {
 
-        // TODO: is Infinity possible in a FloatArray?
         var minX = Infinity,
             maxX = -Infinity,
             minY = Infinity,
@@ -494,7 +492,7 @@
 
       // 2) Repulsion
       //--------------
-      // NOTES: adjustSize = antiCollision & scalingRatio = coefficient
+      // NOTES: adjustSizes = antiCollision & scalingRatio = coefficient
 
       if (W.settings.barnesHutOptimize) {
         coefficient = W.settings.scalingRatio;
@@ -524,7 +522,7 @@
                 xDist = NodeMatrix[np(n, 'x')] - RegionMatrix[rp(r, 'massCenterX')];
                 yDist = NodeMatrix[np(n, 'y')] - RegionMatrix[rp(r, 'massCenterY')];
 
-                if (W.settings.adjustSize) {
+                if (W.settings.adjustSizes) {
 
                   //-- Linear Anti-collision Repulsion
                   if (distance > 0) {
@@ -580,7 +578,7 @@
 
                 distance = Math.sqrt(xDist * xDist + yDist * yDist);
 
-                if (W.settings.adjustSize) {
+                if (W.settings.adjustSizes) {
 
                   //-- Linear Anti-collision Repulsion
                   if (distance > 0) {
@@ -632,7 +630,7 @@
             xDist = NodeMatrix[np(n1, 'x')] - NodeMatrix[np(n2, 'x')];
             yDist = NodeMatrix[np(n1, 'y')] - NodeMatrix[np(n2, 'y')];
 
-            if (W.settings.adjustSize) {
+            if (W.settings.adjustSizes) {
 
               //-- Anticollision Linear Repulsion
               distance = Math.sqrt(xDist * xDist + yDist * yDist) -
@@ -738,12 +736,7 @@
         w = EdgeMatrix[ep(e, 'weight')];
 
         // Edge weight influence
-        if (W.settings.edgeWeightInfluence === 0)
-          ewc = 1
-        else if (W.settings.edgeWeightInfluence === 1)
-          ewc = w;
-        else
-          ewc = Math.pow(w, W.settings.edgeWeightInfluence);
+        ewc = Math.pow(w, W.settings.edgeWeightInfluence);
 
         // Common measures
         xDist = NodeMatrix[np(n1, 'x')] - NodeMatrix[np(n2, 'x')];
@@ -958,7 +951,18 @@
 
       // From same document as sigma
       sendNewCoords = function() {
-        var e = new Event('newCoords');
+        var e;
+
+        if (document.createEvent) {
+          e = document.createEvent('Event');
+          e.initEvent('newCoords', true, false);
+        }
+        else {
+          e = document.createEventObject();
+          e.eventType = 'newCoords';
+        }
+
+        e.eventName = 'newCoords';
         e.data = {
           nodes: NodeMatrix.buffer
         };

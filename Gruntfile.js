@@ -39,9 +39,9 @@ module.exports = function(grunt) {
     'src/renderers/canvas/sigma.canvas.hovers.def.js',
     'src/renderers/canvas/sigma.canvas.nodes.def.js',
     'src/renderers/canvas/sigma.canvas.edges.def.js',
-    'src/renderers/canvas/sigma.canvas.edges.curve.js',
+    'src/renderers/canvas/sigma.canvas.edges.dotCurve.js',
     'src/renderers/canvas/sigma.canvas.edges.arrow.js',
-    'src/renderers/canvas/sigma.canvas.edges.curvedArrow.js',
+    'src/renderers/canvas/sigma.canvas.edges.dotCurvedArrow.js',
     'src/renderers/canvas/sigma.canvas.edgehovers.def.js',
     'src/renderers/canvas/sigma.canvas.edgehovers.curve.js',
     'src/renderers/canvas/sigma.canvas.edgehovers.arrow.js',
@@ -71,8 +71,11 @@ module.exports = function(grunt) {
   var plugins = [
     'exporters.svg',
     'layout.forceAtlas2',
+    'layout.noverlap',
+    'neo4j.cypher',
     'parsers.gexf',
     'parsers.json',
+    'pathfinding.astar',
     'plugins.animate',
     'plugins.dragNodes',
     'plugins.filter',
@@ -80,7 +83,9 @@ module.exports = function(grunt) {
     'plugins.relativeSize',
     'renderers.customEdgeShapes',
     'renderers.customShapes',
+    'renderers.edgeDots',
     'renderers.edgeLabels',
+    'renderers.parallelEdges',
     'renderers.snapshot',
     'statistics.HITS'
   ];

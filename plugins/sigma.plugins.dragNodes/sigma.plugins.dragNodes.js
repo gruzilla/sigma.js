@@ -38,13 +38,13 @@
 
     // A quick hardcoded rule to prevent people from using this plugin with the
     // WebGL renderer (which is impossible at the moment):
-    if (
-      sigma.renderers.webgl &&
-      renderer instanceof sigma.renderers.webgl
-    )
-      throw new Error(
-        'The sigma.plugins.dragNodes is not compatible with the WebGL renderer'
-      );
+    // if (
+    //   sigma.renderers.webgl &&
+    //   renderer instanceof sigma.renderers.webgl
+    // )
+    //   throw new Error(
+    //     'The sigma.plugins.dragNodes is not compatible with the WebGL renderer'
+    //   );
 
     // Init variables:
     var _self = this,
@@ -61,7 +61,7 @@
       _isMouseDown = false,
       _isMouseOverCanvas = false,
       _drag = false;
-    
+
     if (renderer instanceof sigma.renderers.svg) {
         _mouse = renderer.container.firstChild;
     }
@@ -213,7 +213,7 @@
         captor: event,
         renderer: _renderer
       });
-      
+
       _drag = false;
       _node = null;
     };
@@ -248,10 +248,28 @@
         }
 
         // Applying linear interpolation.
-        x = ((x - ref[0].renX) / (ref[1].renX - ref[0].renX)) *
-          (ref[1].x - ref[0].x) + ref[0].x;
-        y = ((y - ref[0].renY) / (ref[1].renY - ref[0].renY)) *
-          (ref[1].y - ref[0].y) + ref[0].y;
+        // if the nodes are on top of each other, we use the camera ratio to interpolate
+        if (ref[0].x === ref[1].x && ref[0].y === ref[1].y) {
+          var xRatio = (ref[0].renX === 0) ? 1 : ref[0].renX;
+          var yRatio = (ref[0].renY === 0) ? 1 : ref[0].renY;
+          x = (ref[0].x / xRatio) * (x - ref[0].renX) + ref[0].x;
+          y = (ref[0].y / yRatio) * (y - ref[0].renY) + ref[0].y;
+        } else {
+          var xRatio = (ref[1].renX - ref[0].renX) / (ref[1].x - ref[0].x);
+          var yRatio = (ref[1].renY - ref[0].renY) / (ref[1].y - ref[0].y);
+
+          // if the coordinates are the same, we use the other ratio to interpolate
+          if (ref[1].x === ref[0].x) {
+            xRatio = yRatio;
+          }
+
+          if (ref[1].y === ref[0].y) {
+            yRatio = xRatio;
+          }
+
+          x = (x - ref[0].renX) / xRatio + ref[0].x;
+          y = (y - ref[0].renY) / yRatio + ref[0].y;
+        }
 
         // Rotating the coordinates.
         _node.x = x * cos - y * sin;
