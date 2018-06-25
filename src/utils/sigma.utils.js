@@ -119,41 +119,56 @@
    * returns an integer equal to "r * 255 * 255 + g * 255 + b", to gain some
    * memory in the data given to WebGL shaders.
    *
+   * Note that the function actually caches its results for better performance.
+   *
    * @param  {string} val The hexa or rgba color.
    * @return {number}     The number value.
    */
-  sigma.utils.floatColor = function(val) {
-    var result = [0, 0, 0];
+  var floatColorCache = {};
 
-    if (val.match(/^#/)) {
-      val = (val || '').replace(/^#/, '');
-      result = (val.length === 3) ?
-        [
-          parseInt(val.charAt(0) + val.charAt(0), 16),
-          parseInt(val.charAt(1) + val.charAt(1), 16),
-          parseInt(val.charAt(2) + val.charAt(2), 16)
-        ] :
-        [
-          parseInt(val.charAt(0) + val.charAt(1), 16),
-          parseInt(val.charAt(2) + val.charAt(3), 16),
-          parseInt(val.charAt(4) + val.charAt(5), 16)
-        ];
+  sigma.utils.floatColor = function(val) {
+
+    // Is the color already computed?
+    if (floatColorCache[val])
+      return floatColorCache[val];
+
+    var original = val,
+        r = 0,
+        g = 0,
+        b = 0;
+
+    if (val[0] === '#') {
+      val = val.slice(1);
+
+      if (val.length === 3) {
+        r = parseInt(val.charAt(0) + val.charAt(0), 16);
+        g = parseInt(val.charAt(1) + val.charAt(1), 16);
+        b = parseInt(val.charAt(2) + val.charAt(2), 16);
+      }
+      else {
+        r = parseInt(val.charAt(0) + val.charAt(1), 16);
+        g = parseInt(val.charAt(2) + val.charAt(3), 16);
+        b = parseInt(val.charAt(4) + val.charAt(5), 16);
+      }
     } else if (val.match(/^ *rgba? *\(/)) {
       val = val.match(
         /^ *rgba? *\( *([0-9]*) *, *([0-9]*) *, *([0-9]*) *(,.*)?\) *$/
       );
-      result = [
-        +val[1],
-        +val[2],
-        +val[3]
-      ];
+      r = +val[1];
+      g = +val[2];
+      b = +val[3];
     }
 
-    return (
-      result[0] * 256 * 256 +
-      result[1] * 256 +
-      result[2]
+    var color = (
+      r * 256 * 256 +
+      g * 256 +
+      b
     );
+
+    // Caching the color
+    floatColorCache[original] = color;
+
+    return color;
   };
 
     /**
@@ -591,6 +606,24 @@
   };
 
   /**
+   * The pixel ratio of the screen. Taking zoom into account
+   *
+   * @return {number}        Pixel ratio of the screen
+   */
+  sigma.utils.getPixelRatio = function() {
+    var ratio = 1;
+    if (window.screen.deviceXDPI !== undefined &&
+         window.screen.logicalXDPI !== undefined &&
+         window.screen.deviceXDPI > window.screen.logicalXDPI) {
+        ratio = window.screen.systemXDPI / window.screen.logicalXDPI;
+    }
+    else if (window.devicePixelRatio !== undefined) {
+        ratio = window.devicePixelRatio;
+    }
+    return ratio;
+  };
+
+  /**
    * Extract the width from a mouse or touch event.
    *
    * @param  {event}  e A mouse or touch event.
@@ -605,6 +638,45 @@
       (typeof w === 'number' && w) ||
       (w !== undefined && w.baseVal !== undefined && w.baseVal.value)
     );
+  };
+
+  /**
+   * Extract the center from a mouse or touch event.
+   *
+   * @param  {event}  e A mouse or touch event.
+   * @return {object}   The center of the event's target.
+   */
+  sigma.utils.getCenter = function(e) {
+    var ratio = e.target.namespaceURI.indexOf('svg') !== -1 ? 1 :
+        sigma.utils.getPixelRatio();
+    return {
+      x: sigma.utils.getWidth(e) / (2 * ratio),
+      y: sigma.utils.getHeight(e) / (2 * ratio)
+    };
+  };
+
+  /**
+   * Convert mouse coords to sigma coords
+   *
+   * @param  {event}   e A mouse or touch event.
+   * @param  {number?} x The x coord to convert
+   * @param  {number?} x The y coord to convert
+   *
+   * @return {object}    The standardized event
+   */
+  sigma.utils.mouseCoords = function(e, x, y) {
+    x = x || sigma.utils.getX(e);
+    y = y || sigma.utils.getY(e);
+    return {
+        x: x - sigma.utils.getCenter(e).x,
+        y: y - sigma.utils.getCenter(e).y,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        altKey: e.altKey,
+        shiftKey: e.shiftKey
+    };
   };
 
   /**

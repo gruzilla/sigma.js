@@ -1,4 +1,5 @@
 ;(function(undefined) {
+  'use strict';
 
   /**
    * Sigma SVG Exporter
@@ -30,7 +31,7 @@
       [data],
       {type: 'image/svg+xml;charset=utf-8'}
     );
-  };
+  }
 
   function download(string, filename) {
 
@@ -38,9 +39,10 @@
     var blob = createBlob(string);
 
     // Anchor
-    var anchor = document.createElement('a');
-    anchor.setAttribute('href', URL.createObjectURL(blob));
-    anchor.setAttribute('download', filename);
+    var o = {};
+    o.anchor = document.createElement('a');
+    o.anchor.setAttribute('href', URL.createObjectURL(blob));
+    o.anchor.setAttribute('download', filename);
 
     // Click event
     var event = document.createEvent('MouseEvent');
@@ -49,8 +51,8 @@
 
     URL.revokeObjectURL(blob);
 
-    anchor.dispatchEvent(event);
-    delete anchor;
+    o.anchor.dispatchEvent(event);
+    delete o.anchor;
   }
 
 
@@ -88,6 +90,7 @@
     // Creating style tag if needed
     if (params.classes) {
       style = document.createElementNS(XMLNS, 'style');
+      style.setAttribute('type', 'text/css')
       svg.insertBefore(style, svg.firstChild);
     }
 
@@ -103,10 +106,12 @@
       if (params.classes) {
 
         if (!(color in nodeColorIndex)) {
-          styleText += '.' + (f ? prefix + '-node' : 'color-' + (count++)) +
-                       '{fill: ' + color + '}';
-          nodeColorIndex[color] = true;
+          nodeColorIndex[color] = (f ? prefix + '-node' : 'c-' + (count++));
+          styleText += '.' + nodeColorIndex[color] + '{fill: ' + color + '}';
         }
+
+        if (nodeColorIndex[color] !== prefix + '-node')
+          nodes[i].setAttribute('class', nodes[i].getAttribute('class') + ' ' + nodeColorIndex[color]);
         nodes[i].removeAttribute('fill');
       }
 
@@ -125,10 +130,12 @@
       if (params.classes) {
 
         if (!(color in edgeColorIndex)) {
-          styleText += '.' + (f ? prefix + '-edge' : 'color-' + (count++)) +
-                       '{stroke: ' + color + '}';
-          edgeColorIndex[color] = true;
+          edgeColorIndex[color] = (f ? prefix + '-edge' : 'c-' + (count++));
+          styleText += '.' + edgeColorIndex[color] + '{stroke: ' + color + '}';
         }
+
+        if (edgeColorIndex[color] !== prefix + '-edge')
+          edges[i].setAttribute('class', edges[i].getAttribute('class') + ' ' + edgeColorIndex[color]);
         edges[i].removeAttribute('stroke');
       }
 

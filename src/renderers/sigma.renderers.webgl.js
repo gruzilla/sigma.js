@@ -70,6 +70,9 @@
     Object.defineProperty(this, 'edgeFloatArrays', {
       value: {}
     });
+    Object.defineProperty(this, 'edgeIndicesArrays', {
+      value: {}
+    });
 
     // Initialize the DOM elements:
     if (this.settings(options, 'batchEdgesDrawing')) {
@@ -133,7 +136,9 @@
         type,
         renderer,
         graph = this.graph,
-        options = sigma.utils.extend(options, this.options);
+        options = sigma.utils.extend(options, this.options),
+        defaultEdgeType = this.settings(options, 'defaultEdgeType'),
+        defaultNodeType = this.settings(options, 'defaultNodeType');
 
     // Empty float arrays:
     for (k in this.nodeFloatArrays)
@@ -142,9 +147,12 @@
     for (k in this.edgeFloatArrays)
       delete this.edgeFloatArrays[k];
 
+    for (k in this.edgeIndicesArrays)
+      delete this.edgeIndicesArrays[k];
+
     // Sort edges and nodes per types:
     for (a = graph.edges(), i = 0, l = a.length; i < l; i++) {
-      type = a[i].type || this.settings(options, 'defaultEdgeType');
+      type = a[i].type || defaultEdgeType;
       k = (type && sigma.webgl.edges[type]) ? type : 'def';
 
       if (!this.edgeFloatArrays[k])
@@ -156,7 +164,7 @@
     }
 
     for (a = graph.nodes(), i = 0, l = a.length; i < l; i++) {
-      type = a[i].type || this.settings(options, 'defaultNodeType');
+      type = a[i].type || defaultNodeType;
       k = (type && sigma.webgl.nodes[type]) ? type : 'def';
 
       if (!this.nodeFloatArrays[k])
@@ -170,12 +178,14 @@
     // Push edges:
     for (k in this.edgeFloatArrays) {
       renderer = sigma.webgl.edges[k];
+      a = this.edgeFloatArrays[k].edges;
 
-      for (a = this.edgeFloatArrays[k].edges, i = 0, l = a.length; i < l; i++) {
-        if (!this.edgeFloatArrays[k].array)
-          this.edgeFloatArrays[k].array = new Float32Array(
-            a.length * renderer.POINTS * renderer.ATTRIBUTES
-          );
+      // Creating the necessary arrays
+      this.edgeFloatArrays[k].array = new Float32Array(
+        a.length * renderer.POINTS * renderer.ATTRIBUTES
+      );
+
+      for (i = 0, l = a.length; i < l; i++) {
 
         // Just check that the edge and both its extremities are visible:
         if (
@@ -193,13 +203,24 @@
             this.settings
           );
       }
+
+      if (typeof renderer.computeIndices === 'function')
+        this.edgeIndicesArrays[k] = renderer.computeIndices(
+          this.edgeFloatArrays[k].array
+        );
     }
 
     // Push nodes:
     for (k in this.nodeFloatArrays) {
       renderer = sigma.webgl.nodes[k];
+      a = this.nodeFloatArrays[k].nodes;
 
-      for (a = this.nodeFloatArrays[k].nodes, i = 0, l = a.length; i < l; i++) {
+      // Creating the necessary arrays
+      this.nodeFloatArrays[k].array = new Float32Array(
+        a.length * renderer.POINTS * renderer.ATTRIBUTES
+      );
+
+      for (i = 0, l = a.length; i < l; i++) {
         if (!this.nodeFloatArrays[k].array)
           this.nodeFloatArrays[k].array = new Float32Array(
             a.length * renderer.POINTS * renderer.ATTRIBUTES
@@ -287,6 +308,7 @@
               arr,
               end,
               start,
+              indices,
               renderer,
               batchSize,
               currentProgram;
@@ -300,6 +322,7 @@
           i = 0;
           renderer = sigma.webgl.edges[a[i]];
           arr = this.edgeFloatArrays[a[i]].array;
+          indices = this.edgeIndicesArrays[a[i]];
           start = 0;
           end = Math.min(
             start + batchSize * renderer.POINTS,
@@ -328,7 +351,8 @@
                     'webglOversamplingRatio'
                   ),
                   start: start,
-                  count: end - start
+                  count: end - start,
+                  indicesData: indices
                 }
               );
             }
@@ -386,7 +410,8 @@
                 width: this.width,
                 height: this.height,
                 ratio: this.camera.ratio,
-                scalingRatio: this.settings(options, 'webglOversamplingRatio')
+                scalingRatio: this.settings(options, 'webglOversamplingRatio'),
+                indicesData: this.edgeIndicesArrays[k]
               }
             );
           }
@@ -517,7 +542,8 @@
   sigma.renderers.webgl.prototype.resize = function(w, h) {
     var k,
         oldWidth = this.width,
-        oldHeight = this.height;
+        oldHeight = this.height,
+        pixelRatio = sigma.utils.getPixelRatio();
 
     if (w !== undefined && h !== undefined) {
       this.width = w;
@@ -538,8 +564,11 @@
         if (this.domElements[k].tagName.toLowerCase() === 'canvas') {
           // If simple 2D canvas:
           if (this.contexts[k] && this.contexts[k].scale) {
-            this.domElements[k].setAttribute('width', w + 'px');
-            this.domElements[k].setAttribute('height', h + 'px');
+            this.domElements[k].setAttribute('width', (w * pixelRatio) + 'px');
+            this.domElements[k].setAttribute('height', (h * pixelRatio) + 'px');
+
+            if (pixelRatio !== 1)
+              this.contexts[k].scale(pixelRatio, pixelRatio);
           } else {
             this.domElements[k].setAttribute(
               'width',
@@ -573,12 +602,7 @@
    * @return {sigma.renderers.webgl} Returns the instance itself.
    */
   sigma.renderers.webgl.prototype.clear = function() {
-    var k;
-
-    for (k in this.domElements)
-      if (this.domElements[k].tagName === 'CANVAS')
-        this.domElements[k].width = this.domElements[k].width;
-
+    this.contexts.labels.clearRect(0, 0, this.width, this.height);
     this.contexts.nodes.clear(this.contexts.nodes.COLOR_BUFFER_BIT);
     this.contexts.edges.clear(this.contexts.edges.COLOR_BUFFER_BIT);
 
